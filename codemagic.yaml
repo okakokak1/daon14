@@ -1,0 +1,29 @@
+workflows:
+  android-apk-build:
+    name: 다온시스템 CRM APK 빌드
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: 프로젝트 루트 자동 탐색 및 안드로이드 뼈대 생성
+        script: |
+          if [ ! -f "pubspec.yaml" ] && [ -f "daon_crm/pubspec.yaml" ]; then
+            cp -r daon_crm/* .
+            rm -rf daon_crm
+          fi
+          mkdir -p /tmp/daon_bak/drawable /tmp/daon_bak/mipmap
+          cp android/app/src/main/AndroidManifest.xml /tmp/daon_bak/AndroidManifest.xml
+          cp android/app/src/main/res/drawable/* /tmp/daon_bak/drawable/ 2>/dev/null || true
+          cp android/app/src/main/res/mipmap-anydpi-v26/* /tmp/daon_bak/mipmap/ 2>/dev/null || true
+          flutter create --org com.daonsystem --platforms=android .
+          rm -f android/app/src/main/res/mipmap-*/ic_launcher*.png android/app/src/main/res/mipmap-*/ic_launcher*.webp
+          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/mipmap-anydpi-v26
+          cp /tmp/daon_bak/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          cp /tmp/daon_bak/drawable/* android/app/src/main/res/drawable/ 2>/dev/null || true
+          cp /tmp/daon_bak/mipmap/* android/app/src/main/res/mipmap-anydpi-v26/ 2>/dev/null || true
+          flutter pub get
+      - name: 릴리즈 APK 빌드
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
